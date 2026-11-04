@@ -1,4 +1,4 @@
-<body ><p >Here are the list of incidents that have been tracked so far:</p><table ><thead ><tr ><td >name</td><td >since</td><td >end</td><td >duration</td></tr></thead><tbody ><tr ><td >connection</td><td data-actual-time=1791534534>2026-10-09 08:28:54</td><td ></td><td ><span style='font-size: 1.8em; color: red'>637</span> hour 45 min 35 sec</td></tr></tbody></table><p >Time has been adjusted to your system timezone. <br> Generated at <span id=generated-time data-actual-time=1793830469>2026-11-04 22:14:29</span>.</p><script >'use strict';
+<body ><p >Here are the list of incidents that have been tracked so far:</p><table ><thead ><tr ><td >name</td><td >since</td><td >end</td><td >duration</td></tr></thead><tbody ><tr ><td >connection</td><td data-actual-time=1791534534>2026-10-09 08:28:54</td><td ></td><td ><span style='font-size: 1.8em; color: red'>638</span> hour 39 min 9 sec</td></tr></tbody></table><p >Time has been adjusted to your system timezone. <br> Generated at <span id=generated-time data-actual-time=1793833683>2026-11-04 23:08:03</span>.</p><script >'use strict';
 document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('[data-actual-time]').forEach(function(elm){
     var time = parseInt(elm.dataset.actualTime, 10) * 1000;
@@ -64,14 +64,18 @@ document.addEventListener('DOMContentLoaded', function(){
     var size = 1 * 1000;
     var cdate = new Date();
     var ndate = new Date(Math.ceil(cdate.getTime() / size) * size);
+    var startEndCount = Object.seal([0, 0]);
 
     document.querySelectorAll('tbody tr').forEach(function(rowElm){
       var startTime = rowElm.querySelector('td:nth-child(2)').dataset.actualTime;
       var endTime = rowElm.querySelector('td:nth-child(3)').dataset.actualTime;
       var duration;
 
+      starTEndCount[0] += 1;
+
       if (typeof endTime === 'string') {
         duration = parseInt(endTime, 10) - parseInt(startTime, 10);
+        starTEndCount[1] += 1;
       } else {
         duration = Math.floor(cdate.getTime() / 1000) - parseInt(startTime, 10);
       }
@@ -79,7 +83,8 @@ document.addEventListener('DOMContentLoaded', function(){
       durationHTML(rowElm, duration);
     });
 
-    preciseInterval(startTimer, ndate);
+    if (startEndCount[0] > startEndCount[1])
+      preciseInterval(startTimer, ndate);
   }
 
   startTimer();
