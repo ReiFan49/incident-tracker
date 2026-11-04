@@ -119,7 +119,7 @@ incident_head=$(xml_tag thead "${incident_head}")
 script_adjust_time=$(cat <<-EOF
 'use strict';
 document.addEventListener('DOMContentLoaded', function(){
-  document.querySelectorAll('td[data-actual-time]').forEach(function(elm){
+  document.querySelectorAll('[data-actual-time]').forEach(function(elm){
     var time = parseInt(elm.dataset.actualTime, 10) * 1000;
     var date = new Date(time);
 
@@ -137,8 +137,15 @@ document.addEventListener('DOMContentLoaded', function(){
 EOF
 )
 
+footer_timestamp=$(xml_tag span data-actual-time=${CURRENT_TIME} "$(date -d @${CURRENT_TIME} +'%Y-%m-%d %H:%M:%S')")
+footer_time=(
+  'Time has been adjusted to your system timezone.'
+  '<br>'
+  "Generated at ${footer_timestamp}."
+)
+
 html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
-html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag script "${script_adjust_time}")$(xml_tag p 'Time has been adjusted to your system timezone.')
+html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_adjust_time}")
 html=$(xml_tag body "${html}")
 
 echo "${html}" > docs/index.html
