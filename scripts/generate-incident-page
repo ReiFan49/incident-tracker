@@ -188,14 +188,18 @@ document.addEventListener('DOMContentLoaded', function(){
     var size = 1 * 1000;
     var cdate = new Date();
     var ndate = new Date(Math.ceil(cdate.getTime() / size) * size);
+    var startEndCount = Object.seal([0, 0]);
 
     document.querySelectorAll('tbody tr').forEach(function(rowElm){
       var startTime = rowElm.querySelector('td:nth-child(2)').dataset.actualTime;
       var endTime = rowElm.querySelector('td:nth-child(3)').dataset.actualTime;
       var duration;
 
+      startEndCount[0] += 1;
+
       if (typeof endTime === 'string') {
         duration = parseInt(endTime, 10) - parseInt(startTime, 10);
+        starTEndCount[1] += 1;
       } else {
         duration = Math.floor(cdate.getTime() / 1000) - parseInt(startTime, 10);
       }
@@ -203,7 +207,8 @@ document.addEventListener('DOMContentLoaded', function(){
       durationHTML(rowElm, duration);
     });
 
-    preciseInterval(startTimer, ndate);
+    if (startEndCount[0] > startEndCount[1])
+      preciseInterval(startTimer, ndate);
   }
 
   startTimer();
