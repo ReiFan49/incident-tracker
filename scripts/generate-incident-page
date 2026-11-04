@@ -67,8 +67,24 @@ for incident in "${INCIDENT_LIST[@]}"; do
     duration_keys=(${duration_keys[@]:1})
   done
 
+  if [[ ${duration_parts[0]} -ge 1000 ]]; then
+    focus_size=2.0
+  elif [[ ${duration_parts[0]} -ge 500 ]]; then
+    focus_size=1.8
+  elif [[ ${duration_parts[0]} -ge 100 ]]; then
+    focus_size=1.6
+  elif [[ ${duration_parts[0]} -ge 60 ]]; then
+    focus_size=1.6
+  elif [[ ${duration_parts[0]} -ge 30 ]]; then
+    focus_size=1.4
+  elif [[ ${#duration_parts} -gt 1 ]]; then
+    focus_size=1.2
+  else
+    focus_size=1.1
+  fi
+
   duration_html=
-  duration_html+=$(xml_tag span style="'font-size: 1.8em; color: red'" "${duration_parts[0]}")
+  duration_html+=$(xml_tag span style="'font-size: ${focus_size}em; color: red'" "${duration_parts[0]}")
   duration_html="${duration_html:+${duration_html} }${duration_keys[0]}"
   duration_parts=(${duration_parts[@]:1})
   duration_keys=(${duration_keys[@]:1})
