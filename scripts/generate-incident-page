@@ -84,9 +84,9 @@ for incident in "${INCIDENT_LIST[@]}"; do
 
   tr=
   tr+=$(xml_tag td "${INCIDENT_NAME[${incident}]}")
-  tr+=$(xml_tag td "$(date -d @${start_time} +'%Y-%m-%d %H:%M:%S')")
+  tr+=$(xml_tag td data-actual-time=${start_time} "$(date -d @${start_time} +'%Y-%m-%d %H:%M:%S')")
   if [[ -n "${end_time}" ]]; then
-    tr+=$(xml_tag td "$(date -d @${end_time} +'%Y-%m-%d %H:%M:%S')")
+    tr+=$(xml_tag td data-actual-time=${end_time} "$(date -d @${end_time} +'%Y-%m-%d %H:%M:%S')")
   else
     tr+=$(xml_tag td)
   fi
@@ -100,8 +100,29 @@ incident_head=$(xml_tag td name)$(xml_tag td since)$(xml_tag td end)$(xml_tag td
 incident_head=$(xml_tag tr "${incident_head}")
 incident_head=$(xml_tag thead "${incident_head}")
 
+script_adjust_time=$(cat <<-EOF
+'use strict';
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('td[data-actual-time]').forEach(function(elm){
+    var time = parseInt(elm.dataset.actualTime, 10) * 1000;
+    var date = new Date(time);
+
+    elm.textContent = [
+      String(date.getFullYear()).padStart(4, '0'),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0')
+    ].join('-') + ' ' + [
+      String(date.getHours()).padStart(2, '0'),
+      String(date.getMinutes()).padStart(2, '0'),
+      String(date.getSeconds()).padStart(2, '0'),
+    ].join(':');
+  });
+});
+EOF
+)
+
 html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
-html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")
+html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag script "${script_adjust_time}")$(xml_tag p 'Time has been adjusted to your system timezone.')
 html=$(xml_tag body "${html}")
 
 echo "${html}" > docs/index.html
