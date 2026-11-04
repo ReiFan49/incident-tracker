@@ -1,0 +1,47 @@
+name: Generate Page
+
+on:
+  push:
+    paths:
+    - '.github/workflows/gneerate-page.yml'
+    - 'incidents/**'
+    - 'scripts/**'
+
+  repository_dispatch:
+    types:
+    - incident_page_refresh
+
+jobs:
+  generate:
+    name: Generate Static Page
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+    - run: scripts/setup-worktree
+    - run: scripts/generate-incident-page
+    - run: |
+    - name: Commit the Changes
+      working-directory: docs
+      run: |
+        CO=(
+          --author="github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+        )
+        PO=()
+
+        git config user.name  'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git config push.autoSetupRemote true
+
+        if [[ -n "${{ (github.event_name == 'push' && github.event.forced) && '1' || '' }}" ]]; then
+          CO+=(--amend)
+          PO+=(-f)
+        fi
+
+        git add .
+        git commit "${CO[@]}" -m "generated from \`${GITHUB_SHA:0:8}\`"
+        git push "${PO[@]}"
