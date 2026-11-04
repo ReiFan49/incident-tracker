@@ -10,13 +10,19 @@ if [[ -d docs ]]; then
     echo -e "\e[33mdocs/.git does not exist, pruning the folder.\e[m" >&2
     rm -r docs
   fi
-else
+elif [[ -f docs ]]; then
   echo -e "\e[31mdocs is not a folder, it is a reserved folder for scripting, removing.\e[m" >&2
   rm docs
 fi
 
-if (git branch -a --format='%(refname:short)' | grep -qF -e "origin/docs" -e "docs"); then
-  git workflow add -b docs docs origin/docs
+branch=docs
+opts=(-b "${branch}")
+refspec=
+
+if (git branch -a --format='%(refname:short)' | grep -qF -e "origin/${branch}" -e "${branch}"); then
+  refspec=origin/${branch}
 else
-  git worktree add --orphan -b docs docs
+  opts+=(--orphan)
 fi
+
+git worktree add "${opts[@]}" docs "${refspec}"
