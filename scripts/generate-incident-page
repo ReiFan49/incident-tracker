@@ -140,7 +140,7 @@ EOF
 script_auto_refresh=$(cat <<-'EOF'
 'use strict';
 document.addEventListener('DOMContentLoaded', function(){
-  var elm = document.querySelector('span[data-actual-time]');
+  var elm = document.getElementById('generated-time');
   var hour = 3600000;
 
   var cdate = new Date();
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function(){
 EOF
 )
 
-footer_timestamp=$(xml_tag span data-actual-time=${CURRENT_TIME} "$(date -d @${CURRENT_TIME} +'%Y-%m-%d %H:%M:%S')")
+footer_timestamp=$(xml_tag span id=generated-time data-actual-time=${CURRENT_TIME} "$(date -d @${CURRENT_TIME} +'%Y-%m-%d %H:%M:%S')")
 footer_time=(
   'Time has been adjusted to your system timezone.'
   '<br>'
