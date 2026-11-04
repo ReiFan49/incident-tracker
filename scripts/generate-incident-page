@@ -74,9 +74,9 @@ for incident in "${INCIDENT_LIST[@]}"; do
   elif [[ ${duration_parts[0]} -ge 100 ]]; then
     focus_size=1.6
   elif [[ ${duration_parts[0]} -ge 60 ]]; then
-    focus_size=1.6
-  elif [[ ${duration_parts[0]} -ge 30 ]]; then
     focus_size=1.4
+  elif [[ ${duration_parts[0]} -ge 30 ]]; then
+    focus_size=1.3
   elif [[ ${#duration_parts} -gt 1 ]]; then
     focus_size=1.2
   else
@@ -137,6 +137,80 @@ document.addEventListener('DOMContentLoaded', function(){
 EOF
 )
 
+script_auto_ticker=$(cat <<-'EOF'
+'use strict';
+document.addEventListener('DOMContentLoaded', function(){
+  function durationHTML(elm, deltaTime) {
+    var parts = [
+      Math.floor(deltaTime / 3600),
+      Math.floor(deltaTime / 60) % 60,
+      Math.floor(deltaTime / 1) % 60,
+    ];
+    var keys = ['hour', 'min', 'sec'];
+
+    for (; parts[0] <= 0 && parts.length > 1; parts.shift(), keys.shift());
+
+    var head_scale;
+    if (parts[0] >= 1000) head_scale = 2.0;
+    else if (parts[0] >= 500) head_scale = 1.8;
+    else if (parts[0] >= 100) head_scale = 1.6;
+    else if (parts[0] >=  60) head_scale = 1.4;
+    else if (parts[0] >=  30) head_scale = 1.3;
+    else if (parts.length > 1) head_scale = 1.2;
+    else head_scale = 1.1;
+
+    var durationElm = elm.querySelector('td:nth-of-type(4)');
+    while (durationElm.childNodes.length) durationElm.childNodes[0].remove();
+
+    var childs = [];
+    childs.push(document.createElement('span'));
+    childs[childs.length - 1].style.fontSize = `${head_scale}em`;
+    childs[childs.length - 1].style.color = 'red';
+    childs[childs.length - 1].textContent = parts.shift();
+    childs.push(document.createTextNode(` ${keys.shift()}`));
+
+    while (parts.length) {
+      childs.push(document.createTextNode(` ${parts.shift()}`));
+      childs.push(document.createTextNode(` ${keys.shift()}`));
+    }
+
+    while (childs.length) durationElm.appendChild(childs.shift());
+  }
+
+  function preciseInterval(callback, ndate) {
+    var cdate = new Date();
+    var dtime = ndate.getTime() - cdate.getTime();
+
+    setTimeout(callback, dtime);
+  }
+
+  function startTimer() {
+    var size = 1 * 1000;
+    var cdate = new Date();
+    var ndate = new Date(Math.ceil(cdate.getTime() / size) * size);
+
+    document.querySelectorAll('tbody tr').forEach(function(rowElm){
+      var startTime = rowElm.querySelector('td:nth-child(2)').dataset.actualTime;
+      var endTime = rowElm.querySelector('td:nth-child(3)').dataset.actualTime;
+      var duration;
+
+      if (typeof endTime === 'string') {
+        duration = parseInt(endTime, 10) - parseInt(startTime, 10);
+      } else {
+        duration = Math.floor(cdate.getTime() / 1000) - parseInt(startTime, 10);
+      }
+
+      durationHTML(rowElm, duration);
+    });
+
+    preciseInterval(startTimer, ndate);
+  }
+
+  startTimer();
+});
+EOF
+)
+
 script_auto_refresh=$(cat <<-'EOF'
 'use strict';
 document.addEventListener('DOMContentLoaded', function(){
@@ -163,7 +237,7 @@ footer_time=(
 )
 
 html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
-html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_adjust_time}")$(xml_tag script "${script_auto_refresh}")
+html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_adjust_time}")$(xml_tag script "${script_auto_ticker}")$(xml_tag script "${script_auto_refresh}")
 html=$(xml_tag body "${html}")
 
 echo "${html}" > docs/index.html
