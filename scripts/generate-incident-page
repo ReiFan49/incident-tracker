@@ -1,0 +1,107 @@
+#!/bin/bash
+INCIDENT_LIST=()
+declare -A INCIDENT_NAME
+declare -A INCIDENT_START_TIME
+declare -A INCIDENT_END_TIME
+
+xml_tag() {
+  TAG="${@:1:1}"
+  ATTR=
+  LAST=
+
+  if [[ $# -ge 3 ]]; then
+    ATTRS=( "${@:2:$(($#-2))}" )
+    for attr in "${ATTRS[@]}"; do
+      ATTR="${ATTR:+${ATTR} }${attr}"
+    done
+    unset ATTRS
+  fi
+
+  [[ $# -ge 2 ]] && LAST="${@:$#:1}"
+
+  echo "<${TAG} ${ATTR}>${LAST}</${TAG}>"
+}
+
+for incident_dir in incidents/*; do
+  key=$(basename ${incident_dir})
+  name=
+  start=
+  end=
+
+  [[ -f ${incident_dir}/name ]] && name=$(cat ${incident_dir}/name)
+  start=$(cat ${incident_dir}/start)
+  [[ -f ${incident_dir}/end ]] && end=$(cat ${incident_dir}/end)
+
+  if [[ ! -f ${incident_dir}/start ]]; then
+    echo "Incident ${key} is not a valid incident." >&2
+  fi
+
+  INCIDENT_LIST+=("${key}")
+  INCIDENT_NAME+=(["${key}"]="${name:-${key}}")
+  INCIDENT_START_TIME+=(["${key}"]="${start}")
+  INCIDENT_END_TIME+=(["${key}"]="${end}")
+done
+
+DURATION_KEYS=(hour min sec)
+
+INCIDENT_HTML_LIST=
+CURRENT_TIME=$(date +%s)
+for incident in "${INCIDENT_LIST[@]}"; do
+  start_time="${INCIDENT_START_TIME[${incident}]}"
+  end_time="${INCIDENT_END_TIME[${incident}]}"
+  if [[ -n ${end_time} ]]; then
+    duration=$((${end_time} - ${start_time}))
+  else
+    duration=$((${CURRENT_TIME} - ${start_time}))
+  fi
+
+  duration_keys=( ${DURATION_KEYS[@]} )
+  duration_parts=(
+    $(( (${duration} / 3600) ))
+    $(( (${duration} / 60) % 60 ))
+    $(( ${duration} % 60 ))
+  )
+  
+  while [[ ${duration_parts[0]} -le 0 ]] && [[ ${#duration_parts[@]} -gt 1 ]]; do
+    duration_parts=(${duration_parts[@]:1})
+    duration_keys=(${duration_keys[@]:1})
+  done
+
+  duration_html=
+  duration_html+=$(xml_tag span style="'font-size: 1.8em; color: red'" "${duration_parts[0]}")
+  duration_html="${duration_html:+${duration_html} }${duration_keys[0]}"
+  duration_parts=(${duration_parts[@]:1})
+  duration_keys=(${duration_keys[@]:1})
+
+  while [[ ${#duration_parts[@]} -ge 1 ]]; do
+    if [[ ${duration_parts[0]} -gt 0 ]]; then
+      duration_html="${duration_html:+${duration_html} }${duration_parts[0]} ${duration_keys[0]}"
+    fi
+
+    duration_parts=(${duration_parts[@]:1})
+    duration_keys=(${duration_keys[@]:1})
+  done
+
+  tr=
+  tr+=$(xml_tag td "${INCIDENT_NAME[${incident}]}")
+  tr+=$(xml_tag td "$(date -d @${start_time} +'%Y-%m-%d %H:%M:%S')")
+  if [[ -n "${end_time}" ]]; then
+    tr+=$(xml_tag td "$(date -d @${end_time} +'%Y-%m-%d %H:%M:%S')")
+  else
+    tr+=$(xml_tag td)
+  fi
+  tr+=$(xml_tag td "${duration_html}")
+
+  tr=$(xml_tag tr "${tr}")
+  INCIDENT_HTML_LIST="${INCIDENT_HTML_LIST}${tr}"
+done
+
+incident_head=$(xml_tag td name)$(xml_tag td since)$(xml_tag td end)$(xml_tag td duration)
+incident_head=$(xml_tag tr "${incident_head}")
+incident_head=$(xml_tag thead "${incident_head}")
+
+html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
+html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")
+html=$(xml_tag body "${html}")
+
+echo "${html}" > docs/index.html
