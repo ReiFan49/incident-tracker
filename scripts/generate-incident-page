@@ -137,6 +137,22 @@ document.addEventListener('DOMContentLoaded', function(){
 EOF
 )
 
+script_auto_refresh=$(cat <<-'EOF'
+'use strict';
+document.addEventListener('DOMContentLoaded', function(){
+  var hour = 3600000;
+
+  var cdate = new Date();
+  var ctime = cdate.getTime();
+  var ptime = Math.floor(cdate / hour) * hour;
+  var ntime = ptime + hour;
+
+  var dtime = ntime - ctime;
+  setTimeout(window.location.reload, dtime);
+});
+EOF
+)
+
 footer_timestamp=$(xml_tag span data-actual-time=${CURRENT_TIME} "$(date -d @${CURRENT_TIME} +'%Y-%m-%d %H:%M:%S')")
 footer_time=(
   'Time has been adjusted to your system timezone.'
@@ -145,7 +161,7 @@ footer_time=(
 )
 
 html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
-html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_adjust_time}")
+html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_adjust_time}")$(xml_tag script "${script_auto_refresh}")
 html=$(xml_tag body "${html}")
 
 echo "${html}" > docs/index.html
