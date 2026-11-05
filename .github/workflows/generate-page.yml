@@ -22,9 +22,12 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-    - run: scripts/setup-worktree
-    - run: scripts/generate-incident-page
-    - run: |
+    - name: Setup Worktree
+      run: scripts/setup-worktree
+    - name: Check All Incident Statuses
+      run: scripts/check-all-incident-statuses
+    - name: Generate Page
+      run: scripts/generate-incident-page
     - name: Commit the Changes
       working-directory: docs
       run: |
@@ -43,5 +46,10 @@ jobs:
         fi
 
         git add .
-        git commit "${CO[@]}" -m "generated from \`${GITHUB_SHA:0:8}\`"
+
+        if [[ ${{ github.event_name }} = 'push' ]]; then
+          git commit "${CO[@]}" -m "generated from \`${GITHUB_SHA:0:8}\`"
+        else
+          git commit "${CO[@]}" -m "generated through trigger at \`$(date +'%Y-%m-%d %H:%M:%S')\`"
+        fi
         git push "${PO[@]}"

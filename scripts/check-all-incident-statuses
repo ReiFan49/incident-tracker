@@ -1,0 +1,43 @@
+#!/bin/bash
+INCIDENT_LIST=()
+declare -A INCIDENT_HAS_START
+declare -A INCIDENT_HAS_END
+
+for incident_dir in incidents/*; do
+  [[ -d ${incident_dir} ]] || continue
+
+  key=$(basename ${incident_dir})
+  [[ -f ${incident_dir}/start ]] || continue
+  INCIDENT_HAS_START+=(["${key}"]=$?)
+
+  [[ -f ${incident_dir}/end ]];
+  INCIDENT_HAS_END+=(["${key}"]=$?)
+
+  INCIDENT_LIST+=(${key})
+done
+
+INCIDENT_STARTED_COUNT=0
+INCIDENT_ENDED_COUNT=0
+
+for incident in "${INCIDENT_LIST[@]}"; do
+  [[ ${INCIDENT_HAS_START[${incident}]} -eq 0 ]] && INCIDENT_STARTED_COUNT=$(( ${INCIDENT_STARTED_COUNT} + 1 ))
+  [[ ${INCIDENT_HAS_END[${incident}]} -eq 0 ]] && INCIDENT_ENDED_COUNT=$(( ${INCIDENT_ENDED_COUNT} + 1 ))
+done
+
+branch=docs
+file_marker=.indicents-cleared
+
+if [[ ${INCIDENT_STARTED_COUNT} -eq ${INCIDENT_END_COUNT} ]]; then
+  if [[ ! -f docs/${file_marker} ]]; then
+    touch docs/${file_marker}
+    git -C ${branch} add ${file_marker}
+  else
+    :
+  fi
+else
+  if [[ ! -f docs/${file_marker} ]]; then
+    :
+  else
+    git -C ${branch} rm ${file_marker}
+  fi
+fi
