@@ -19,7 +19,7 @@ xml_tag() {
 
   [[ $# -ge 2 ]] && LAST="${@:$#:1}"
 
-  echo "<${TAG} ${ATTR}>${LAST}</${TAG}>"
+  echo "<${TAG}${ATTR:+ ${ATTR}}>${LAST}</${TAG}>"
 }
 
 for incident_dir in incidents/*; do
