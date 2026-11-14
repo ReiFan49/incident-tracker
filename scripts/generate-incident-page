@@ -186,8 +186,11 @@ document.addEventListener('DOMContentLoaded', function(){
     childs.push(document.createTextNode(` ${keys.shift()}`));
 
     while (parts.length) {
-      childs.push(document.createTextNode(` ${parts.shift()}`));
-      childs.push(document.createTextNode(` ${keys.shift()}`));
+      var segTime = parts.shift(), segKey = keys.shift();
+      if (segTime <= 0) continue;
+
+      childs.push(document.createTextNode(` ${segTime}`));
+      childs.push(document.createTextNode(` ${segKey}`));
     }
 
     while (childs.length) durationElm.appendChild(childs.shift());
