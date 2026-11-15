@@ -271,6 +271,6 @@ footer_time=(
 
 html=${incident_head}$(xml_tag tbody "${INCIDENT_HTML_LIST}")
 html=$(xml_tag p 'Here are the list of incidents that have been tracked so far:')$(xml_tag table "${html}")$(xml_tag p "${footer_time[*]}")$(xml_tag script "${script_lib_precise}")$(xml_tag script "${script_adjust_time}")$(xml_tag script "${script_auto_ticker}")$(xml_tag script "${script_auto_refresh}")
-html=$(xml_tag body "${html}")
+html="<!DOCTYPE html>"$(xml_tag body "${html}")
 
 echo "${html}" > docs/index.html
